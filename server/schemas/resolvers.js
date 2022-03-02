@@ -14,7 +14,6 @@ const resolvers = {
       return user;
     }
   },
-
   Mutation: {
     createUser: async (_, { username, email, password }) => {
       const user = await User.create({ username, email, password });
@@ -49,7 +48,7 @@ const resolvers = {
 
       return modUser;
     },
-    deleteBook: async (_, { user, deleteBook }) => {
+    removeBook: async (_, { user, deletedBook }) => {
       console.log(user);
       // One more || operator.
       const modUser = User.findOneAndUpdate(
