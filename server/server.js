@@ -2,10 +2,11 @@ const express = require('express');
 const { ApolloServer } = require('apollo-server-express');
 const { ApolloServerPluginDrainHttpServer, ApolloServerPluginLandingPageGraphQLPlayground, ApolloServerPluginLandingPageDisabled } = require('apollo-server-core');
 const { typeDefs, resolvers } = require('./schemas');
-const http = require('http');
-// const path = require('path');
+const { authMiddleware } = require('./utils/auth');
 
-// const db = require('./config/connection');
+// const path = require('path');
+const http = require('http');
+const db = require('./config/connection');
 
 // const PORT = process.env.PORT || 3001;
 // const app = express();
@@ -17,12 +18,13 @@ async function startApolloServer() {
   const server = new ApolloServer({
     typeDefs,
     resolvers,
+    context: authMiddleware,
     cors: true,
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer }),
-      process.env.NODE_ENV === 'production'
+    process.env.NODE_ENV === 'production'
       ? ApolloServerPluginLandingPageDisabled()
       : ApolloServerPluginLandingPageGraphQLPlayground(),
-      ],
+    ],
   });
 
   await server.start();
@@ -40,6 +42,11 @@ async function startApolloServer() {
 
   // Mount Apollo middleware here.
   server.applyMiddleware({ app, path: '/graphql', cors: false });
+
+  db.once('open', () => {
+    console.log('Mongoose DB connection established.')
+  });
+
   await new Promise(resolve => httpServer.listen({ port: 3001 }, resolve));
   console.log(`🚀 Server ready at http://localhost:3001${server.graphqlPath}`);
   return { server, app };

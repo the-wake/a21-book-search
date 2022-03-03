@@ -33,35 +33,41 @@ const resolvers = {
       return { token, user };
 
     },
-    saveBook: async (_, { user, newBook }) => {
-      console.log(user);
-      // `Or` thing again.
-      const modUser = User.findOneAndUpdate(
-        { _id: user._id },
-        { $addToSet: { savedBooks: newBook } },
-        { new: true, runValidators: true },
-      );
+    saveBook: async (_, { newBook }, context) => {
+      console.log(context.user);
+      if (context.user) {
+        const modUser = User.findOneAndUpdate(
+          { _id: context.user._id },
+          { $addToSet: { savedBooks: newBook } },
+          { new: true, runValidators: true },
+        );
 
-      if (!modUser) {
-        throw new AuthenticationError('User not found.')
-      }
+        if (!modUser) {
+          throw new AuthenticationError('User not found.');
+        }
 
-      return modUser;
-    },
-    removeBook: async (_, { user, deletedBook }) => {
-      console.log(user);
-      // One more || operator.
-      const modUser = User.findOneAndUpdate(
-        { _id: user._id },
-        { $pull: { savedBooks: newBook } },
-        { new: true, runValidators: true },
-      );
-
-      if (!modUser) {
-        throw new AuthenticationError('User not found.')
+        return modUser;
       }
       
-      return modUser;
+      throw new AuthenticationError('You must be logged in.');
+    },
+    removeBook: async (_, { deletedBook }, context) => {
+      console.log(context.user);
+      if (context.user) {
+        const modUser = User.findOneAndUpdate(
+          { _id: context.user._id },
+          { $pull: { savedBooks: deletedBook } },
+          { new: true, runValidators: true },
+        );
+  
+        if (!modUser) {
+          throw new AuthenticationError('User not found.');
+        }
+  
+        return modUser;
+      }
+
+      throw new AuthenticationError('You must be logged in.');
     }
   }
 }
